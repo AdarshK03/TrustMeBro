@@ -1,5 +1,7 @@
 package com.platform.userservice.controller;
 
+import com.platform.userservice.dto.LoginRequest;
+import com.platform.userservice.dto.LoginResponse;
 import com.platform.userservice.dto.UserCreateRequest;
 import com.platform.userservice.dto.UserResponse;
 import com.platform.userservice.service.UserService;
@@ -28,6 +30,13 @@ public class UserController {
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequest request) {
         UserResponse created = userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PostMapping("/login")
+    @Operation(summary = "User login", description = "Authenticates user credentials and returns a signed JWT token")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        LoginResponse response = userService.login(request);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping

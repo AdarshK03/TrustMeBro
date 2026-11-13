@@ -20,6 +20,9 @@ public class User {
     @Column(nullable = false, length = 30)
     private String role;
 
+    @Column(name = "password", nullable = false, length = 255, columnDefinition = "VARCHAR(255) DEFAULT '$2a$10$wKlh43gP0a4ZkY/gN82tjeH3jU0dZqN81.t4zJ1b7O7w5g0uLpWv6'")
+    private String password;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -35,12 +38,23 @@ public class User {
         this.role = (role == null || role.isBlank()) ? "CUSTOMER" : role;
     }
 
+    public User(String name, String email, String role, String password) {
+        this.name = name;
+        this.email = email;
+        this.role = (role == null || role.isBlank()) ? "CUSTOMER" : role;
+        this.password = password;
+    }
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
         if (this.role == null || this.role.isBlank()) {
             this.role = "CUSTOMER";
+        }
+        if (this.password == null || this.password.isBlank()) {
+            // Default BCrypt hash for "Password@123" if not explicitly provided
+            this.password = "$2a$10$wKlh43gP0a4ZkY/gN82tjeH3jU0dZqN81.t4zJ1b7O7w5g0uLpWv6";
         }
     }
 
@@ -79,6 +93,14 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public Instant getCreatedAt() {

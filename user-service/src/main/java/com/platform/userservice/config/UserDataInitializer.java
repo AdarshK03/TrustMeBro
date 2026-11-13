@@ -21,12 +21,15 @@ public class UserDataInitializer implements CommandLineRunner {
     private static final Logger log = LoggerFactory.getLogger(UserDataInitializer.class);
 
     private final UserRepository userRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Value("${app.seed-data.enabled:false}")
     private boolean seedDataEnabled;
 
-    public UserDataInitializer(UserRepository userRepository) {
+    public UserDataInitializer(UserRepository userRepository,
+                               org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -39,9 +42,9 @@ public class UserDataInitializer implements CommandLineRunner {
         log.info("Development seed data is enabled. Initializing default sample users if absent...");
 
         List<User> sampleUsers = List.of(
-                new User("Alice Developer", "alice.dev@example.com", "ADMIN"),
-                new User("Bob Customer", "bob.cust@example.com", "CUSTOMER"),
-                new User("Charlie Support", "charlie.support@example.com", "SUPPORT")
+                new User("Alice Developer", "alice.dev@example.com", "ADMIN", passwordEncoder.encode("Admin@123")),
+                new User("Bob Customer", "bob.cust@example.com", "CUSTOMER", passwordEncoder.encode("Customer@123")),
+                new User("Charlie Support", "charlie.support@example.com", "SUPPORT", passwordEncoder.encode("Support@123"))
         );
 
         for (User sample : sampleUsers) {

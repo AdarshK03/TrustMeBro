@@ -6,6 +6,9 @@ import com.platform.orderservice.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,8 +34,16 @@ public class OrderController {
     }
 
     @GetMapping
-    @Operation(summary = "List orders", description = "Returns all placed orders or filters by user ID")
-    public ResponseEntity<List<OrderResponse>> getAllOrders(@RequestParam(name = "userId", required = false) Long userId) {
+    @Operation(summary = "List orders", description = "Returns all placed orders, filters by user ID, or returns paginated orders")
+    public ResponseEntity<?> getAllOrders(
+            @RequestParam(name = "userId", required = false) Long userId,
+            @RequestParam(name = "page", required = false) Integer page,
+            @RequestParam(name = "size", required = false) Integer size) {
+        if (page != null && size != null) {
+            Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size));
+            Page<OrderResponse> pagedOrders = orderService.getOrders(userId, pageable);
+            return ResponseEntity.ok(pagedOrders);
+        }
         if (userId != null) {
             return ResponseEntity.ok(orderService.getOrdersByUserId(userId));
         }

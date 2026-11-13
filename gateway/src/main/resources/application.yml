@@ -6,6 +6,9 @@ spring:
     name: api-gateway
   cloud:
     gateway:
+      httpclient:
+        connect-timeout: 3000
+        response-timeout: 5s
       routes:
         - id: user-service-route
           uri: ${USER_SERVICE_URL:http://localhost:8081}
@@ -47,6 +50,22 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+
+security:
+  jwt:
+    enabled: ${SECURITY_JWT_ENABLED:${GATEWAY_SECURITY_ENABLED:true}}
+    secret: ${JWT_SECRET:cloud_platform_api_gateway_super_secure_jwt_signing_key_2026_min_256_bits!}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+
+gateway:
+  rate-limit:
+    enabled: ${RATE_LIMIT_ENABLED:false}
+    max-requests: ${RATE_LIMIT_MAX_REQUESTS:100}
+    window-seconds: ${RATE_LIMIT_WINDOW_SECONDS:60}
+  cache:
+    enabled: ${CACHE_ENABLED:false}
+    expiration-seconds: ${CACHE_EXPIRATION_SECONDS:60}
+    max-size: ${CACHE_MAX_SIZE:100}
 
 logging:
   level:

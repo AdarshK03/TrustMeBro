@@ -152,4 +152,76 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2));
     }
+
+    @Test
+    void login_ValidCredentials_Returns200AndJwtToken() throws Exception {
+        UserCreateRequest createReq = new UserCreateRequest("Auth User", "auth.user@example.com", "ADMIN", "Secret@123");
+        mockMvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated());
+
+        com.platform.userservice.dto.LoginRequest loginReq =
+                new com.platform.userservice.dto.LoginRequest("auth.user@example.com", "Secret@123");
+
+        mockMvc.perform(post("/api/users/login")
+                        .header("X-Correlation-ID", "corr-login-200")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.expiresIn").isNumber())
+                .andExpect(jsonPath("$.user.email").value("auth.user@example.com"))
+                .andExpect(jsonPath("$.user.role").value("ADMIN"));
+    }
+
+    @Test
+    void login_InvalidPassword_Returns401Unauthorized() throws Exception {
+        UserCreateRequest createReq = new UserCreateRequest("Auth User 2", "auth.user2@example.com", "CUSTOMER", "CorrectPassword123");
+        mockMvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isCreated());
+
+        com.platform.userservice.dto.LoginRequest loginReq =
+                new com.platform.userservice.dto.LoginRequest("auth.user2@example.com", "WrongPassword123");
+
+        mockMvc.perform(post("/api/users/login")
+                        .header("X-Correlation-ID", "corr-login-401")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginReq)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.message").value("Invalid email or password"))
+                .andExpect(jsonPath("$.requestId").value("corr-login-401"));
+    }
+
+    @Test
+    void login_UserNotFound_Returns401Unauthorized() throws Exception {
+        com.platform.userservice.dto.LoginRequest loginReq =
+                new com.platform.userservice.dto.LoginRequest("nonexistent@example.com", "SomePassword123");
+
+        mockMvc.perform(post("/api/users/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginReq)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.message").value("Invalid email or password"));
+    }
+
+    @Test
+    void login_BlankEmail_Returns400BadRequest() throws Exception {
+        com.platform.userservice.dto.LoginRequest loginReq =
+                new com.platform.userservice.dto.LoginRequest("", "SomePassword123");
+
+        mockMvc.perform(post("/api/users/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginReq)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"));
+    }
 }

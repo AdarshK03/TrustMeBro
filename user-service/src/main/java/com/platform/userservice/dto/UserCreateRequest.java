@@ -18,6 +18,9 @@ public class UserCreateRequest {
     @Size(max = 30, message = "Role must not exceed 30 characters")
     private String role;
 
+    @Size(min = 6, max = 100, message = "Password must be between 6 and 100 characters")
+    private String password;
+
     public UserCreateRequest() {
     }
 
@@ -25,6 +28,13 @@ public class UserCreateRequest {
         this.name = name;
         this.email = email;
         this.role = role;
+    }
+
+    public UserCreateRequest(String name, String email, String role, String password) {
+        this.name = name;
+        this.email = email;
+        this.role = role;
+        this.password = password;
     }
 
     public String getName() {
@@ -49,5 +59,13 @@ public class UserCreateRequest {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

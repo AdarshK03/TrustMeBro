@@ -1,8 +1,11 @@
 package com.platform.userservice.service;
 
+import com.platform.userservice.dto.LoginRequest;
+import com.platform.userservice.dto.LoginResponse;
 import com.platform.userservice.dto.UserCreateRequest;
 import com.platform.userservice.dto.UserResponse;
 import com.platform.userservice.exception.DuplicateResourceException;
+import com.platform.userservice.exception.InvalidCredentialsException;
 import com.platform.userservice.exception.ResourceNotFoundException;
 import com.platform.userservice.model.User;
 import com.platform.userservice.repository.UserRepository;
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
 import java.util.List;
@@ -27,6 +31,12 @@ class UserServiceUnitTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private JwtTokenService jwtTokenService;
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -34,7 +44,7 @@ class UserServiceUnitTest {
 
     @BeforeEach
     void setUp() {
-        sampleUser = new User("Alice", "alice@example.com", "CUSTOMER");
+        sampleUser = new User("Alice", "alice@example.com", "CUSTOMER", "$2a$10$encodedPassword");
         sampleUser.setId(1L);
         sampleUser.setCreatedAt(Instant.now());
         sampleUser.setUpdatedAt(Instant.now());
@@ -44,6 +54,7 @@ class UserServiceUnitTest {
     void createUser_Success() {
         UserCreateRequest request = new UserCreateRequest("Alice", "alice@example.com", "CUSTOMER");
         when(userRepository.existsByEmail("alice@example.com")).thenReturn(false);
+        when(passwordEncoder.encode(any())).thenReturn("$2a$10$encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(sampleUser);
 
         UserResponse response = userService.createUser(request);
@@ -108,5 +119,40 @@ class UserServiceUnitTest {
         assertEquals("Alice", responses.get(0).getName());
         assertEquals("Bob", responses.get(1).getName());
         verify(userRepository, times(1)).findAll();
+    }
+
+    @Test
+    void login_Success() {
+        LoginRequest request = new LoginRequest("alice@example.com", "Password@123");
+        when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(sampleUser));
+        when(passwordEncoder.matches("Password@123", "$2a$10$encodedPassword")).thenReturn(true);
+        when(jwtTokenService.generateToken(sampleUser)).thenReturn("mock.jwt.token");
+        when(jwtTokenService.getExpirationMs()).thenReturn(86400000L);
+
+        LoginResponse response = userService.login(request);
+
+        assertNotNull(response);
+        assertEquals("mock.jwt.token", response.getToken());
+        assertEquals("Bearer", response.getTokenType());
+        assertEquals(86400000L, response.getExpiresIn());
+        assertEquals("Alice", response.getUser().getName());
+        assertEquals("alice@example.com", response.getUser().getEmail());
+    }
+
+    @Test
+    void login_UserNotFound_ThrowsInvalidCredentials() {
+        LoginRequest request = new LoginRequest("unknown@example.com", "Password@123");
+        when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+
+        assertThrows(InvalidCredentialsException.class, () -> userService.login(request));
+    }
+
+    @Test
+    void login_WrongPassword_ThrowsInvalidCredentials() {
+        LoginRequest request = new LoginRequest("alice@example.com", "WrongPassword");
+        when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(sampleUser));
+        when(passwordEncoder.matches("WrongPassword", "$2a$10$encodedPassword")).thenReturn(false);
+
+        assertThrows(InvalidCredentialsException.class, () -> userService.login(request));
     }
 }

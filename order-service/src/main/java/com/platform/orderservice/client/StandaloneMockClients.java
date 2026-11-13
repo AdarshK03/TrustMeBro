@@ -2,6 +2,7 @@ package com.platform.orderservice.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -9,31 +10,32 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 /**
- * Configuration providing fallback / mock client implementations ensuring Order Service
- * can be built, tested, and executed independently during Day 1 development.
+ * Optional fallback mock client configuration that can be enabled via
+ * configuration (services.mock.enabled=true) or standalone testing.
  */
 @Configuration
+@ConditionalOnProperty(name = "services.mock.enabled", havingValue = "true")
 public class StandaloneMockClients {
 
     private static final Logger log = LoggerFactory.getLogger(StandaloneMockClients.class);
 
     @Bean
-    public UserServiceClient userServiceClient() {
+    public UserServiceClient mockUserServiceClient() {
         return new UserServiceClient() {
             @Override
             public boolean verifyUserExists(Long userId) {
-                log.info("[Inter-Service Contract] Checking user existence for userId={} with User Service", userId);
+                log.info("[Mock Inter-Service] Checking user existence for userId={}", userId);
                 return userId != null && userId > 0;
             }
         };
     }
 
     @Bean
-    public ProductServiceClient productServiceClient() {
+    public ProductServiceClient mockProductServiceClient() {
         return new ProductServiceClient() {
             @Override
             public Optional<ProductDto> getProductDetails(Long productId) {
-                log.info("[Inter-Service Contract] Querying live price and stock for productId={} from Product Service", productId);
+                log.info("[Mock Inter-Service] Querying mock price and stock for productId={}", productId);
                 if (productId == null || productId <= 0) {
                     return Optional.empty();
                 }
