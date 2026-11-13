@@ -1,0 +1,15 @@
+{
+  "name": "api-gateway-microservices-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloud-Based API Gateway and Microservices Management Platform",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "run-all": "powershell -ExecutionPolicy Bypass -File ./scripts/run-all.ps1",
+    "run-jars": "powershell -ExecutionPolicy Bypass -File ./scripts/run-jars.ps1",
+    "test-all": "powershell -ExecutionPolicy Bypass -File ./scripts/test-all.ps1",
+    "build-all": "powershell -ExecutionPolicy Bypass -File ./scripts/build-all.ps1"
+  }
+}
+
