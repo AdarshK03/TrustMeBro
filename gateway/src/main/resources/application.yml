@@ -25,6 +25,27 @@ spring:
           predicates:
             - Path=/api/orders/**
 
+        - id: user-service-health-route
+          uri: ${USER_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/health/users
+          filters:
+            - SetPath=/actuator/health
+
+        - id: product-service-health-route
+          uri: ${PRODUCT_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/health/products
+          filters:
+            - SetPath=/actuator/health
+
+        - id: order-service-health-route
+          uri: ${ORDER_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/health/orders
+          filters:
+            - SetPath=/actuator/health
+
       globalcors:
         cors-configurations:
           '[/**]':

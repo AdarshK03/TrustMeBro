@@ -1,91 +1,97 @@
 import React, { useState } from 'react';
-import ServiceStatusCard from './components/ServiceStatusCard';
+import ServiceHealthOverview from './components/ServiceHealthOverview';
+import ProductManagement from './components/ProductManagement';
+import OrderManagement from './components/OrderManagement';
+import PerformanceExperiments from './components/PerformanceExperiments';
 import GatewayRouteTester from './components/GatewayRouteTester';
-import { healthApi } from './api/apiClient';
-
-const SERVICES = [
-  { id: 'gw', name: 'API Gateway', port: 8080, prefix: '/api/**' },
-  { id: 'user', name: 'User Service', port: 8081, prefix: '/api/users/**' },
-  { id: 'product', name: 'Product Service', port: 8082, prefix: '/api/products/**' },
-  { id: 'order', name: 'Order Service', port: 8083, prefix: '/api/orders/**' }
-];
+import AuthBar from './components/AuthBar';
+import { BASE_URL } from './api/apiClient';
 
 export default function App() {
-  const [statuses, setStatuses] = useState({
-    gw: 'UNKNOWN',
-    user: 'UNKNOWN',
-    product: 'UNKNOWN',
-    order: 'UNKNOWN'
-  });
-  const [loadingMap, setLoadingMap] = useState({});
-
-  const pingService = async (serviceId, port) => {
-    setLoadingMap(prev => ({ ...prev, [serviceId]: true }));
-    try {
-      const res = await healthApi.checkDirectHealth(port);
-      if (res.status === 200 && res.data?.status === 'UP') {
-        setStatuses(prev => ({ ...prev, [serviceId]: 'UP' }));
-      } else {
-        setStatuses(prev => ({ ...prev, [serviceId]: 'DOWN' }));
-      }
-    } catch {
-      setStatuses(prev => ({ ...prev, [serviceId]: 'OFFLINE' }));
-    } finally {
-      setLoadingMap(prev => ({ ...prev, [serviceId]: false }));
-    }
-  };
-
-  const pingAll = () => {
-    SERVICES.forEach(s => pingService(s.id, s.port));
-  };
+  const [activeSection, setActiveSection] = useState('health'); // 'health' | 'products' | 'orders' | 'experiments' | 'routes'
+  const [, setAuthUser] = useState(null);
 
   return (
     <div className="container">
-      <header>
-        <h1>Cloud-Based API Gateway Platform</h1>
-        <p>Microservices Management, Centralized Routing & Observability</p>
+      <header className="app-header">
+        <div className="header-branding">
+          <div className="brand-logo">🌐</div>
+          <div>
+            <h1>Cloud API Gateway & Microservices Platform</h1>
+            <p>Enterprise API Management, Dynamic Ingress Routing & Performance Benchmarking</p>
+          </div>
+        </div>
+        <div className="gateway-target-badge">
+          <span className="target-label">Gateway Ingress:</span>
+          <code>{BASE_URL}</code>
+        </div>
       </header>
 
-      <section>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2 className="section-title" style={{ margin: 0, border: 'none' }}>Topology & Service Health</h2>
-          <button onClick={pingAll} className="btn-secondary" style={{ fontSize: '0.85rem' }}>
-            Ping All Services
-          </button>
+      {/* Authentication and session status bar */}
+      <AuthBar onAuthChange={setAuthUser} />
+
+      {/* Top Navigation Navigation Bar */}
+      <nav className="nav-tabs">
+        <button
+          className={`nav-tab ${activeSection === 'health' ? 'active' : ''}`}
+          onClick={() => setActiveSection('health')}
+        >
+          <span className="nav-icon">🏥</span>
+          <span>Service Health</span>
+        </button>
+
+        <button
+          className={`nav-tab ${activeSection === 'products' ? 'active' : ''}`}
+          onClick={() => setActiveSection('products')}
+        >
+          <span className="nav-icon">📦</span>
+          <span>Product Catalog</span>
+        </button>
+
+        <button
+          className={`nav-tab ${activeSection === 'orders' ? 'active' : ''}`}
+          onClick={() => setActiveSection('orders')}
+        >
+          <span className="nav-icon">🛒</span>
+          <span>Order Management</span>
+        </button>
+
+        <button
+          className={`nav-tab ${activeSection === 'experiments' ? 'active' : ''}`}
+          onClick={() => setActiveSection('experiments')}
+        >
+          <span className="nav-icon">📊</span>
+          <span>Performance Experiments</span>
+        </button>
+
+        <button
+          className={`nav-tab ${activeSection === 'routes' ? 'active' : ''}`}
+          onClick={() => setActiveSection('routes')}
+        >
+          <span className="nav-icon">⚡</span>
+          <span>Route Tester</span>
+        </button>
+      </nav>
+
+      {/* Main Content Sections */}
+      <main className="main-content">
+        {activeSection === 'health' && <ServiceHealthOverview />}
+        {activeSection === 'products' && <ProductManagement />}
+        {activeSection === 'orders' && <OrderManagement />}
+        {activeSection === 'experiments' && <PerformanceExperiments />}
+        {activeSection === 'routes' && <GatewayRouteTester />}
+      </main>
+
+      {/* Architecture Highlights Footer */}
+      <footer className="app-footer">
+        <div className="footer-architecture-summary">
+          <span className="footer-tag">Spring Cloud Gateway (Port 8080)</span>
+          <span className="footer-tag">User Service (Port 8081)</span>
+          <span className="footer-tag">Product Service (Port 8082)</span>
+          <span className="footer-tag">Order Service (Port 8083)</span>
+          <span className="footer-tag">Neon PostgreSQL</span>
         </div>
-
-        <div className="grid">
-          {SERVICES.map(s => (
-            <ServiceStatusCard
-              key={s.id}
-              name={s.name}
-              port={s.port}
-              prefix={s.prefix}
-              status={statuses[s.id]}
-              loading={!!loadingMap[s.id]}
-              onPing={() => pingService(s.id, s.port)}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="section-title">Gateway Ingress & API Contracts</h2>
-        <GatewayRouteTester />
-      </section>
-
-      <section className="card" style={{ marginTop: '2rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Architectural Boundaries (Day 1 Milestone)</h3>
-        <ul style={{ paddingLeft: '1.25rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.7' }}>
-          <li><strong>Zero Shared Tables:</strong> Each service strictly owns its domain tables in Neon PostgreSQL.</li>
-          <li><strong>Reactive Edge:</strong> The Gateway operates purely on Spring Cloud Gateway with reactive non-blocking I/O.</li>
-          <li><strong>Traceability:</strong> Every request forwards an <code>X-Correlation-ID</code> header across downstream services.</li>
-          <li><strong>Security Roadmap:</strong> JWT tokens and token-bucket rate limiting hook points are prepared for Day 4.</li>
-        </ul>
-      </section>
-
-      <footer>
-        <p>Day 1 Architecture & Skeleton Implementation • Spring Boot 3.3.4 • Spring Cloud 2023.0.3 • React 18</p>
+        <p>Day 5 Implementation Milestone • React 18 + Vite • Centralized Gateway Architecture</p>
       </footer>
     </div>
   );

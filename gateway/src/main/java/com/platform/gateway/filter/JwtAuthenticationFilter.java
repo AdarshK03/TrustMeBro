@@ -121,6 +121,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         if (path.startsWith("/fallback")) {
             return true;
         }
+        // Microservice health checks routed via Gateway
+        if (path.startsWith("/api/health")) {
+            return true;
+        }
         return false;
     }
 
