@@ -275,7 +275,35 @@ Located under `scripts/load-testing/`:
 
 ---
 
-## 14. Mandatory Student-Owned Task Boundaries (Confirmed Untouched)
+## 14. Day 6 Implementation Details: Optimized Experiments, Performance Comparison & Results Analysis
+
+### 14.1 Four Controlled Gateway Experimental Configurations
+To evaluate the isolated and combined performance impacts of API Gateway optimizations, four distinct operational configurations are supported via runtime configuration switches:
+- **Configuration A — Baseline:** Gateway routing enabled, Rate limiting disabled (`-DRATE_LIMIT_ENABLED=false`), Response caching disabled (`-DCACHE_ENABLED=false`).
+- **Configuration B — Rate Limiting Only:** Gateway routing enabled, Rate limiting enabled (`-DRATE_LIMIT_ENABLED=true -DRATE_LIMIT_MAX_REQUESTS=100 -DRATE_LIMIT_WINDOW_SECONDS=60`), Response caching disabled. Requests exceeding the threshold return `HTTP 429 Too Many Requests` with `Retry-After` headers.
+- **Configuration C — Response Caching Only:** Gateway routing enabled, Rate limiting disabled, Response caching enabled (`-DCACHE_ENABLED=true -DCACHE_EXPIRATION_SECONDS=60`). Safely caches idempotent `GET /api/products` and `GET /api/products/{id}` calls; automatically invalidates cache upon product mutations (`POST`, `PUT`, `DELETE`).
+- **Configuration D — Combined Optimizations:** Gateway routing enabled, Rate limiting enabled, Response caching enabled. Rate limiting executes first at `HIGHEST_PRECEDENCE + 10` to shed abusive traffic, followed by caching at `HIGHEST_PRECEDENCE + 30` to serve allowed queries at sub-2ms latency.
+
+### 14.2 Gateway Optimization Telemetry & Diagnostics
+- **Diagnostic Endpoint:** Exposes `GET /api/gateway/stats` providing real-time telemetry on active rate-limit status, tracked client IPs, cache hit count, miss count, total lookups, cache hit ratio percentage, invalidation count, and estimated cache memory size.
+- **Cache & Rate-Limit Reset:** Provides `POST /api/gateway/cache/reset` and `POST /api/gateway/rate-limit/reset` to reset counters and evict entries between repeated test runs.
+
+### 14.3 Multi-Run Experiment Harness & Python Analytical Suite
+- **Experiment Runner (`scripts/load-testing/run-experiments.ps1`):** Supports running Baseline, Rate-Limit-Only, Cache-Only, or Combined configurations across Low (5 users), Medium (20 users), and High (50 users) workloads for at least 3 repetitions (`run1`, `run2`, `run3`). Isolates `HTTP 429` rejections from backend failures and queries live Gateway telemetry.
+- **Analysis Tool (`scripts/load-testing/analysis/analyze_results.py`):** Automatically reads raw CSV/JSON results, calculates mean, p95, p99, throughput, error rates, and cache hit ratios, and aggregates across runs.
+- **Visual Chart Generator:** Generates standalone vector SVG comparison charts under `scripts/load-testing/analysis/comparison/` for Average Latency, p95 Latency, p99 Latency, Throughput, HTTP Error Rate, and Cache Hit Ratio.
+- **Findings Report (`scripts/load-testing/analysis/experimental_findings.md`):** Comprehensive report covering trade-offs, stability findings, and the seven mandatory experimental limitations.
+
+### 14.4 Extended React Performance Results Interface
+- **Multi-Configuration Comparison View:** Allows viewing Baseline, Rate Limiting Only, Cache Only, and Combined results side-by-side.
+- **Workload Filters:** Interactive pills to filter comparison tables and charts by Low, Medium, High, or All workloads.
+- **Integrated SVG Chart Visualizer:** Interactive bar charts rendered directly in React comparing configurations across latency, throughput, error rate, and cache hit ratio.
+- **Full Matrix Import:** Seamlessly imports `comparison_summary.json` to populate all configurations and workloads with a single file upload.
+- **Live Gateway Telemetry:** Interactive panel displaying active Gateway optimization status queried via `GET /api/gateway/stats`.
+
+---
+
+## 15. Mandatory Student-Owned Task Boundaries (Confirmed Untouched)
 
 Antigravity has strictly respected the four required boundaries:
 1. **Google Cloud Account / Project:** Not created.

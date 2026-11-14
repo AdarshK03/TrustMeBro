@@ -194,6 +194,13 @@ export const healthApi = {
   }
 };
 
+// Gateway optimization statistics and management API
+export const gatewayApi = {
+  getStats: () => apiRequest('/api/gateway/stats'),
+  resetCache: () => apiRequest('/api/gateway/cache/reset', { method: 'POST' }),
+  resetRateLimit: () => apiRequest('/api/gateway/rate-limit/reset', { method: 'POST' })
+};
+
 export default {
   BASE_URL,
   apiRequest,
@@ -201,6 +208,7 @@ export default {
   productApi,
   orderApi,
   healthApi,
+  gatewayApi,
   setAuthToken,
   getAuthToken,
   getCurrentUser,

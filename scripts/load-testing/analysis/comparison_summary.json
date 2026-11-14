@@ -1,0 +1,22 @@
+{
+  "baseline": {
+    "low": null,
+    "medium": null,
+    "high": null
+  },
+  "rate-limit-only": {
+    "low": null,
+    "medium": null,
+    "high": null
+  },
+  "cache-only": {
+    "low": null,
+    "medium": null,
+    "high": null
+  },
+  "combined": {
+    "low": null,
+    "medium": null,
+    "high": null
+  }
+}

@@ -125,6 +125,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         if (path.startsWith("/api/health")) {
             return true;
         }
+        // Gateway diagnostic statistics
+        if (path.startsWith("/api/gateway")) {
+            return true;
+        }
         return false;
     }
 
